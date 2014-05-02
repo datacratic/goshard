@@ -1,0 +1,12 @@
+[
+  {
+    "Kind": "json",
+    "Pattern": "auction",
+    "Sharder": {
+      "Field": "id",
+      "Table": {
+        "DefaultUrl": "http://localhost:12345"
+      }
+    }
+  }
+]
