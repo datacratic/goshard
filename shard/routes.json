@@ -1,11 +1,37 @@
 [
   {
+    "Name": "auctions",
     "Kind": "json",
-    "Pattern": "auction",
+    "Pattern": "/auctions",
     "Sharder": {
       "Field": "id",
       "Table": {
-        "DefaultUrl": "http://localhost:12345"
+        "Shards": 1,
+        "DefaultUrl": "http://localhost:12339/auctions"
+      }
+    }
+  },
+  {
+    "Name": "wins",
+    "Kind": "json",
+    "Pattern": "/wins",
+    "Sharder": {
+      "Field": "auctionId",
+      "Table": {
+        "Shards": 1,
+        "DefaultUrl": "http://localhost:12340"
+      }
+    }
+  },
+  {
+    "Name": "events",
+    "Kind": "json",
+    "Pattern": "/events",
+    "Sharder": {
+      "Field": "auctionId",
+      "Table": {
+        "Shards": 1,
+        "DefaultUrl": "http://localhost:12341"
       }
     }
   }

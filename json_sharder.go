@@ -9,7 +9,7 @@ import (
 )
 
 type JsonSharder struct {
-	Table
+	Table Table
 	Field string
 }
 
@@ -28,6 +28,14 @@ func (h JsonSharder) Shard(content []byte) (url string, k int, err error) {
 		return
 	}
 
-	url, k = h.GetUrl([]byte(key.(string)))
+	switch t := key.(type) {
+	case float64:
+		url, k = h.Table.GetUrl([]byte(fmt.Sprintf("%d", t)))
+	case string:
+		url, k = h.Table.GetUrl([]byte(t))
+	default:
+		err = fmt.Errorf("field %s must be a string or a number", h.Field)
+	}
+
 	return
 }
