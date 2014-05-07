@@ -27,6 +27,7 @@ type EndpointMetrics struct {
 	ReceivedFailed bool
 	Invalid        bool
 	PostFailed     bool
+	SendFailed     bool
 	ResponseFailed bool
 	Failed         bool
 	ReadDuration   time.Duration
@@ -66,9 +67,18 @@ func (e *Endpoint) routeMessage(w http.ResponseWriter, r *http.Request) (metrics
 	t1 := time.Now()
 	metrics.ReadDuration = t1.Sub(t0)
 
-	s, err := e.Client.Post(url, r.Header.Get("Content-Type"), bytes.NewReader(request))
+	q, err := http.NewRequest("POST", url, bytes.NewReader(request))
 	if err != nil {
 		metrics.PostFailed = true
+		e.Report(err, request)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	q.Header = r.Header
+	s, err := e.Client.Do(q)
+	if err != nil {
+		metrics.SendFailed = true
 		e.Report(err, request)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -88,7 +98,8 @@ func (e *Endpoint) routeMessage(w http.ResponseWriter, r *http.Request) (metrics
 
 	if s.StatusCode != http.StatusOK && s.StatusCode != http.StatusNoContent {
 		metrics.Failed = true
-		e.Report(fmt.Errorf("http response=%d", s.StatusCode), response)
+		err = fmt.Errorf("http response=%d", s.StatusCode)
+		e.Report(err, response)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
