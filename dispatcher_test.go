@@ -20,20 +20,20 @@ func TestEndpoint(t *testing.T) {
 	t.Log("starting fake endpoint")
 	h := httptest.NewServer(http.HandlerFunc(handler))
 
-	e := NewEndpoint("Test")
+	d := NewDispatcher("Test")
 
-	e.Sharder = JsonSharder{
+	d.Sharder = JSONSharder{
 		Field: "id",
 		Table: Table{
 			Shards:     1,
-			DefaultUrl: h.URL,
+			DefaultURL: h.URL,
 		},
 	}
 
-	e.Start()
+	d.Start()
 
 	t.Log("starting dispatcher endpoint")
-	g := httptest.NewServer(e)
+	g := httptest.NewServer(d)
 
 	text := `{"id":"1234567890"}`
 

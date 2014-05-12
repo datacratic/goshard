@@ -8,25 +8,25 @@ import (
 )
 
 type Table struct {
-	DefaultUrl string
-	ShardedUrl string
+	DefaultURL string
+	ShardedURL string
 	Shards     int
-	Url        map[int]string
+	URLs       map[int]string
 }
 
-func (t *Table) GetUrl(id []byte) (url string, i int) {
+func (t *Table) GetURL(id []byte) (url string, i int) {
 	h := fnv.New32()
 	h.Write(id)
 	k := h.Sum32() % uint32(t.Shards)
 
 	i = int(k)
-	if s, ok := t.Url[i]; ok {
+	if s, ok := t.URLs[i]; ok {
 		url = s
 	} else {
-		if t.ShardedUrl != "" {
-			url = fmt.Sprintf(t.ShardedUrl, i)
+		if t.ShardedURL != "" {
+			url = fmt.Sprintf(t.ShardedURL, i)
 		} else {
-			url = t.DefaultUrl
+			url = t.DefaultURL
 		}
 	}
 

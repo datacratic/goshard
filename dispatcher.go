@@ -5,10 +5,8 @@ package shard
 import (
 	"bytes"
 	"fmt"
-	"github.com/EricRobert/goer"
-	"io/ioutil"
+	"github.com/EricRobert/goreports"
 	"net/http"
-	"net/http/httputil"
 	"time"
 )
 
@@ -16,13 +14,13 @@ type Sharder interface {
 	Shard(content []byte) (string, int, error)
 }
 
-type Endpoint struct {
-	*service.Endpoint
+type Dispatcher struct {
+	report.Endpoint
 	Sharder
 	Client http.Client
 }
 
-type EndpointMetrics struct {
+type DispatcherMetrics struct {
 	Request        bool
 	ReceivedFailed bool
 	Invalid        bool
@@ -37,27 +35,25 @@ type EndpointMetrics struct {
 	StatusCode     string
 }
 
-func (e *Endpoint) routeMessage(w http.ResponseWriter, r *http.Request) (metrics EndpointMetrics) {
+func (d *Dispatcher) routeMessage(w http.ResponseWriter, r *http.Request) (metrics DispatcherMetrics) {
 	metrics.Request = true
 
 	t0 := time.Now()
 
-	request, err := ioutil.ReadAll(r.Body)
+	req, err := report.NewRequest(r)
 	if err != nil {
+		d.ReportErrorWithRequest(err, req)
 		metrics.ReceivedFailed = true
-		dump, _ := httputil.DumpRequest(r, true)
-		e.Report(err, dump)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	r.Body.Close()
-	e.Repeat(request, r)
+	d.RepeatRequest(req)
 
-	url, k, err := e.Sharder.Shard(request)
+	url, k, err := d.Sharder.Shard(req.Content)
 	if err != nil {
+		d.ReportErrorWithRequest(err, req)
 		metrics.Invalid = true
-		e.Report(err, request)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -67,62 +63,64 @@ func (e *Endpoint) routeMessage(w http.ResponseWriter, r *http.Request) (metrics
 	t1 := time.Now()
 	metrics.ReadDuration = t1.Sub(t0)
 
-	q, err := http.NewRequest("POST", url, bytes.NewReader(request))
+	q, err := http.NewRequest(r.Method, url, bytes.NewReader(req.Content))
 	if err != nil {
+		d.ReportErrorWithRequest(err, req)
 		metrics.PostFailed = true
-		e.Report(err, request)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	q.Header = r.Header
-	s, err := e.Client.Do(q)
+
+	p, err := d.Client.Do(q)
 	if err != nil {
+		d.ReportErrorWithRequest(err, req)
 		metrics.SendFailed = true
-		e.Report(err, request)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	response, err := ioutil.ReadAll(s.Body)
+	rep, err := report.NewResponse(p)
 	if err != nil {
+		d.ReportErrorWithRequestAndResponse(err, req, rep)
 		metrics.ResponseFailed = true
-		dump, _ := httputil.DumpResponse(s, true)
-		e.Report(err, dump)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metrics.StatusCode = fmt.Sprintf("%d", s.StatusCode)
-	s.Body.Close()
+	metrics.StatusCode = fmt.Sprintf("%d", p.StatusCode)
 
-	if s.StatusCode != http.StatusOK && s.StatusCode != http.StatusNoContent {
+	if p.StatusCode != http.StatusOK && p.StatusCode != http.StatusNoContent {
+		err = fmt.Errorf("http response=%d", p.StatusCode)
+		d.ReportErrorWithRequestAndResponse(err, req, rep)
 		metrics.Failed = true
-		err = fmt.Errorf("http response=%d", s.StatusCode)
-		e.Report(err, response)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	metrics.PostDuration = time.Now().Sub(t1)
 
-	w.Header().Set("Content-Type", s.Header.Get("Content-Type"))
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(response)))
-	w.Write(response)
+	for k, v := range p.Header {
+		w.Header().Set(k, v[0])
+		for i := range v {
+			w.Header().Add(k, v[i])
+		}
+	}
+
+	w.Write(rep.Content)
 
 	metrics.FullDuration = time.Now().Sub(t0)
 	return
 }
 
-func (e *Endpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	result := e.routeMessage(w, r)
-	e.Record(&result)
+func (d *Dispatcher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	result := d.routeMessage(w, r)
+	d.Record(&result)
 }
 
-func NewEndpoint(name string) *Endpoint {
-	e := Endpoint{
-		Endpoint: service.NewEndpoint(name),
-	}
-
-	return &e
+func NewDispatcher(name string) *Dispatcher {
+	d := new(Dispatcher)
+	d.Name = name
+	return d
 }

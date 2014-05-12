@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"github.com/EricRobert/gometrics"
-	"github.com/EricRobert/goer"
+	"github.com/EricRobert/goreports"
 	"github.com/EricRobert/goshard"
 	"log"
 	"net/http"
@@ -16,9 +16,9 @@ import (
 
 var (
 	url       = flag.String("http-address", "", "<addr>:<port> to listen on for HTTP requests")
-	reportUrl = flag.String("report-url", "", "URL where error reports are posted")
-	metricUrl = flag.String("metric-url", "", "URL where metrics are posted")
-	repeatUrl = flag.String("repeat-url", "", "URL where incoming requests are repeated as-is")
+	reportURL = flag.String("report-url", "", "URL where error reports are posted")
+	metricURL = flag.String("metric-url", "", "URL where metrics are posted")
+	repeatURL = flag.String("repeat-url", "", "URL where incoming requests are repeated as-is")
 	routes    = flag.String("routes", "", "routes configuration")
 )
 
@@ -55,12 +55,12 @@ func main() {
 	}
 
 	for _, r := range s {
-		e := shard.NewEndpoint(r.Name)
+		d := shard.NewDispatcher(r.Name)
 
 		var s interface{}
 		switch {
 		case r.Kind == "json":
-			s = new(shard.JsonSharder)
+			s = new(shard.JSONSharder)
 
 		default:
 			log.Fatal("route doesn't specify a supported kind of endpoint")
@@ -71,41 +71,59 @@ func main() {
 			log.Fatal(err.Error())
 		}
 
-		e.Sharder = s.(shard.Sharder)
+		d.Sharder = s.(shard.Sharder)
 
-		if *reportUrl != "" {
-			e.Reporter = &service.Reporter {
+		if *reportURL != "" {
+			d.Reporter = &report.Reporter{
 				Name: r.Name,
 			}
 
-			e.Reporter.SendFunc(func(value interface{}) {
-				text, err := json.Marshal(value)
-				if err != nil {
+			d.Reporter.PublishFunc(func(r *report.Report, bodies map[string][]byte) {
+				b := new(bytes.Buffer)
+
+				e := json.NewEncoder(b)
+				if err := e.Encode(r); err != nil {
 					panic(err.Error())
 				}
 
-				go http.Post(*reportUrl, "application/json", bytes.NewReader(text))
+				if err := r.WriteBody(b, bodies); err != nil {
+					panic(err.Error())
+				}
+
+				_, err = http.Post(*reportURL, "application/json", b)
+				if err != nil {
+					panic(err.Error())
+				}
 			})
 		}
 
-		if *metricUrl != "" {
-			e.Monitor.ReportFunc(func(s *metric.Summary) {
+		if *metricURL != "" {
+			d.Monitor = &metric.Monitor{
+				Name: r.Name,
+			}
+
+			d.Monitor.PublishFunc(func(s *metric.Summary) {
 				text, err := json.Marshal(s)
 				if err != nil {
 					panic(err.Error())
 				}
 
-				go http.Post(*metricUrl, "application/json", bytes.NewReader(text))
+				_, err = http.Post(*metricURL, "application/json", bytes.NewReader(text))
+				if err != nil {
+					panic(err.Error())
+				}
 			})
 		}
 
-		if *repeatUrl != "" {
-			e.RepeatUrl = *repeatUrl
+		if *repeatURL != "" {
+			d.Repeater = &report.PostRequest{
+				URL: *repeatURL,
+			}
 		}
 
-		e.Start()
+		d.Start()
 		log.Printf("adding route=%s\n", r.Pattern)
-		http.Handle(r.Pattern, e)
+		http.Handle(r.Pattern, d)
 	}
 
 	log.Printf("starting dispatcher at address=%s\n", *url)
