@@ -9,6 +9,7 @@ import (
 	"github.com/EricRobert/gometrics"
 	"github.com/EricRobert/goreports"
 	"github.com/EricRobert/goshard"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -90,10 +91,17 @@ func main() {
 					panic(err.Error())
 				}
 
-				_, err = http.Post(*reportURL, "application/json", b)
+				rep, err := http.Post(*reportURL, "application/json", b)
 				if err != nil {
 					panic(err.Error())
 				}
+
+				_, err = ioutil.ReadAll(rep.Body)
+				if err != nil {
+					panic(err.Error())
+				}
+
+				rep.Body.Close()
 			})
 		}
 
@@ -108,10 +116,17 @@ func main() {
 					panic(err.Error())
 				}
 
-				_, err = http.Post(*metricURL, "application/json", bytes.NewReader(text))
+				r, err := http.Post(*metricURL, "application/json", bytes.NewReader(text))
 				if err != nil {
 					panic(err.Error())
 				}
+
+				_, err = ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err.Error())
+				}
+
+				r.Body.Close()
 			})
 		}
 

@@ -7,7 +7,7 @@
       "Field": "id",
       "Table": {
         "Shards": 1,
-        "DefaultUrl": "http://localhost:12339/auctions"
+        "DefaultURL": "http://localhost:12339/auctions"
       }
     }
   },
@@ -19,7 +19,7 @@
       "Field": "auctionId",
       "Table": {
         "Shards": 1,
-        "DefaultUrl": "http://localhost:12340"
+        "DefaultURL": "http://localhost:12340"
       }
     }
   },
@@ -31,7 +31,7 @@
       "Field": "auctionId",
       "Table": {
         "Shards": 1,
-        "DefaultUrl": "http://localhost:12341"
+        "DefaultURL": "http://localhost:12341"
       }
     }
   }
