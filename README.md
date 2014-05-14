@@ -1,6 +1,8 @@
 goshard
 =======
 
+[![Build Status](https://travis-ci.org/EricRobert/goshard.svg?branch=master)](https://travis-ci.org/EricRobert/goshard)
+
 Installing Go
 -------------
 
