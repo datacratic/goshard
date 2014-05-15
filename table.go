@@ -11,7 +11,7 @@ type Table struct {
 	DefaultURL string
 	ShardedURL string
 	Shards     int
-	URLs       map[int]string
+	URLs       map[string]string
 }
 
 func (t *Table) GetURL(id []byte) (url string, i int) {
@@ -20,7 +20,7 @@ func (t *Table) GetURL(id []byte) (url string, i int) {
 	k := h.Sum32() % uint32(t.Shards)
 
 	i = int(k)
-	if s, ok := t.URLs[i]; ok {
+	if s, ok := t.URLs[fmt.Sprintf("%d", i)]; ok {
 		url = s
 	} else {
 		if t.ShardedURL != "" {

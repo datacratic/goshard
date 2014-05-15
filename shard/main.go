@@ -58,7 +58,7 @@ func main() {
 
 		var s interface{}
 		switch {
-		case r.Kind == "json":
+		case r.Kind == "" || r.Kind == "json":
 			s = new(shard.JSONSharder)
 
 		default:
@@ -84,6 +84,10 @@ func main() {
 			d.Recorder = &report.PostRequest{
 				URL: r.RecordURL,
 			}
+		}
+
+		if "" == r.Pattern {
+			r.Pattern = "/"
 		}
 
 		d.Start()

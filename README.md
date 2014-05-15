@@ -70,3 +70,24 @@ For example, this will install a route that will create 8 partitions based on th
 ]
 ```
 
+In this other example, the server names are explicitely stated. First, there is a lookup in the URLs table before using the ShardedURL or the DefaultURL to determine where the request will be forwarded. Note that shard indexes are zero-based.
+
+```
+[
+  {
+    "Name": "Requests",
+    "Kind": "json",
+    "Pattern": "/requests",
+    "Sharder": {
+      "Field": "id",
+      "Table": {
+        "Shards": 2,
+        "URLs": {
+          "0": "http://server-a.org/requests",
+          "1": "http://server-b.org/requests"
+        }
+      }
+    }
+  }
+]
+```
