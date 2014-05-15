@@ -11,7 +11,7 @@ import (
 )
 
 type Sharder interface {
-	Shard(content []byte) (string, int, error)
+	Shard(req *report.Request) (string, int, error)
 }
 
 type Dispatcher struct {
@@ -50,7 +50,7 @@ func (d *Dispatcher) routeMessage(w http.ResponseWriter, r *http.Request) (metri
 
 	d.RecordRequest(req)
 
-	url, k, err := d.Sharder.Shard(req.Content)
+	url, k, err := d.Sharder.Shard(req)
 	if err != nil {
 		d.ReportErrorWithRequest(err, req)
 		metrics.Invalid = true

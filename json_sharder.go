@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/EricRobert/goreports"
 )
 
 type JSONSharder struct {
@@ -13,10 +14,10 @@ type JSONSharder struct {
 	Field string
 }
 
-func (h JSONSharder) Shard(content []byte) (url string, k int, err error) {
+func (h *JSONSharder) Shard(req *report.Request) (url string, k int, err error) {
 	item := make(map[string]interface{})
 
-	decoder := json.NewDecoder(bytes.NewBuffer(content))
+	decoder := json.NewDecoder(bytes.NewBuffer(req.Content))
 	err = decoder.Decode(&item)
 	if err != nil {
 		return
@@ -24,7 +25,7 @@ func (h JSONSharder) Shard(content []byte) (url string, k int, err error) {
 
 	key, ok := item[h.Field]
 	if !ok {
-		err = fmt.Errorf("message body is missing a json object with field '%s'", h.Field)
+		err = fmt.Errorf("message body is missing a JSON object with field '%s'", h.Field)
 		return
 	}
 

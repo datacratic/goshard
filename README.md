@@ -36,7 +36,7 @@ Field | Description
 --- | ---
 Name | friendly identifier for this route
 Pattern | pattern that will be matched against the URL of the incoming request
-Kind | type of sharder e.g. json (default)
+Kind | type of sharder e.g. http, json (default)
 MetricURL | optional URL where metrics are recorded
 ReportURL | optional URL where reports are sent
 RecordURL | optional URL where incoming requests are sent as content
@@ -50,6 +50,7 @@ URLs | map of shard id to URL
 ShardedURL | optional URL that can be built from the shard id e.g. http://server.%d.org
 DefaultURL | fallback URL
 Field | name of the JSON field used for hashing (json only)
+Header | name of the HTTP header used for hashing (http only)
 
 For example, this will install a route that will create 8 partitions based on the `id` field of the JSON message.
 
