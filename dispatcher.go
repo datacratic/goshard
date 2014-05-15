@@ -48,7 +48,7 @@ func (d *Dispatcher) routeMessage(w http.ResponseWriter, r *http.Request) (metri
 		return
 	}
 
-	d.RepeatRequest(req)
+	d.RecordRequest(req)
 
 	url, k, err := d.Sharder.Shard(req.Content)
 	if err != nil {
@@ -116,7 +116,7 @@ func (d *Dispatcher) routeMessage(w http.ResponseWriter, r *http.Request) (metri
 
 func (d *Dispatcher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	result := d.routeMessage(w, r)
-	d.Record(&result)
+	d.RecordMetrics(&result)
 }
 
 func NewDispatcher(name string) *Dispatcher {

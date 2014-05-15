@@ -3,31 +3,29 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"flag"
 	"github.com/EricRobert/gometrics"
 	"github.com/EricRobert/goreports"
 	"github.com/EricRobert/goshard"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 )
 
 var (
-	url       = flag.String("http-address", "", "<addr>:<port> to listen on for HTTP requests")
-	reportURL = flag.String("report-url", "", "URL where error reports are posted")
-	metricURL = flag.String("metric-url", "", "URL where metrics are posted")
-	repeatURL = flag.String("repeat-url", "", "URL where incoming requests are repeated as-is")
-	routes    = flag.String("routes", "", "routes configuration")
+	url    = flag.String("http-address", "", "<addr>:<port> to listen on for HTTP requests")
+	routes = flag.String("routes", "", "routes configuration")
 )
 
 type Route struct {
-	Name    string
-	Pattern string
-	Kind    string
-	Sharder json.RawMessage
+	Name      string
+	Pattern   string
+	Kind      string
+	MetricURL string
+	ReportURL string
+	RecordURL string
+	Sharder   json.RawMessage
 }
 
 type Routes []Route
@@ -49,13 +47,13 @@ func main() {
 	}
 
 	decoder := json.NewDecoder(file)
-	s := Routes{}
-	err = decoder.Decode(&s)
+	items := Routes{}
+	err = decoder.Decode(&items)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	for _, r := range s {
+	for _, r := range items {
 		d := shard.NewDispatcher(r.Name)
 
 		var s interface{}
@@ -74,65 +72,17 @@ func main() {
 
 		d.Sharder = s.(shard.Sharder)
 
-		if *reportURL != "" {
-			d.Reporter = &report.Reporter{
-				Name: r.Name,
-			}
-
-			d.Reporter.PublishFunc(func(r *report.Report, bodies map[string][]byte) {
-				b := new(bytes.Buffer)
-
-				e := json.NewEncoder(b)
-				if err := e.Encode(r); err != nil {
-					panic(err.Error())
-				}
-
-				if err := r.WriteBody(b, bodies); err != nil {
-					panic(err.Error())
-				}
-
-				rep, err := http.Post(*reportURL, "application/json", b)
-				if err != nil {
-					panic(err.Error())
-				}
-
-				_, err = ioutil.ReadAll(rep.Body)
-				if err != nil {
-					panic(err.Error())
-				}
-
-				rep.Body.Close()
-			})
+		if r.MetricURL != "" {
+			d.Monitor = metric.NewJSONMonitor(r.Name, r.MetricURL)
 		}
 
-		if *metricURL != "" {
-			d.Monitor = &metric.Monitor{
-				Name: r.Name,
-			}
-
-			d.Monitor.PublishFunc(func(s *metric.Summary) {
-				text, err := json.Marshal(s)
-				if err != nil {
-					panic(err.Error())
-				}
-
-				r, err := http.Post(*metricURL, "application/json", bytes.NewReader(text))
-				if err != nil {
-					panic(err.Error())
-				}
-
-				_, err = ioutil.ReadAll(r.Body)
-				if err != nil {
-					panic(err.Error())
-				}
-
-				r.Body.Close()
-			})
+		if r.ReportURL != "" {
+			d.Reporter = report.NewJSONReporter(r.Name, r.ReportURL)
 		}
 
-		if *repeatURL != "" {
-			d.Repeater = &report.PostRequest{
-				URL: *repeatURL,
+		if r.RecordURL != "" {
+			d.Recorder = &report.PostRequest{
+				URL: r.RecordURL,
 			}
 		}
 
