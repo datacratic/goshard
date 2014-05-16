@@ -22,7 +22,7 @@ func TestEndpoint(t *testing.T) {
 
 	d := NewDispatcher("Test")
 
-	d.Sharder = JSONSharder{
+	d.Sharder = &JSONSharder{
 		Field: "id",
 		Table: Table{
 			Shards:     1,
