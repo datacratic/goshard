@@ -36,7 +36,7 @@ Field | Description
 --- | ---
 Name | friendly identifier for this route
 Pattern | pattern that will be matched against the URL of the incoming request
-Kind | type of sharder e.g. http, json (default)
+Kind | type of sharder e.g. url, http, json (default)
 MetricURL | optional URL where metrics are recorded
 ReportURL | optional URL where reports are sent
 RecordURL | optional URL where incoming requests are sent as content
@@ -92,3 +92,13 @@ In this other example, the server names are explicitely stated. First, there is 
   }
 ]
 ```
+
+Sharders
+--------
+
+Type | Description
+--- | ---
+json | parse the HTTP body as JSON and use specified string or number field as key
+http | use the specified HTTP header as key
+url | use the last part of the URL as key e.g. /requests/aA1bB2cC3dD4eE5fF6
+

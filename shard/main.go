@@ -64,6 +64,9 @@ func main() {
 		case r.Kind == "http":
 			s = new(shard.HTTPSharder)
 
+		case r.Kind == "url":
+			s = new(shard.URLSharder)
+
 		default:
 			log.Fatal("route doesn't specify a supported kind of endpoint")
 		}
