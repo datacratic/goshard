@@ -67,6 +67,9 @@ func main() {
 		case r.Kind == "url":
 			s = new(shard.URLSharder)
 
+		case r.Kind == "regexp":
+			s = new(shard.RegexpSharder)
+
 		default:
 			log.Fatal("route doesn't specify a supported kind of endpoint")
 		}

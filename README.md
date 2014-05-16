@@ -36,7 +36,7 @@ Field | Description
 --- | ---
 Name | friendly identifier for this route
 Pattern | pattern that will be matched against the URL of the incoming request
-Kind | type of sharder e.g. url, http, json (default)
+Kind | type of sharder e.g. json (default), http, url, regexp
 MetricURL | optional URL where metrics are recorded
 ReportURL | optional URL where reports are sent
 RecordURL | optional URL where incoming requests are sent as content
@@ -49,8 +49,9 @@ Shards | number of shards (must be > 0)
 URLs | map of shard id to URL
 ShardedURL | optional URL that can be built from the shard id e.g. http://server.%d.org
 DefaultURL | fallback URL
-Field | name of the JSON field used for hashing (json only)
-Header | name of the HTTP header used for hashing (http only)
+Field | name of the JSON field (json only)
+Header | name of the HTTP header (http only)
+Expression | regular expression to matched against the HTTP content (regexp only)
 
 For example, this will install a route that will create 8 partitions based on the `id` field of the JSON message.
 
@@ -101,4 +102,5 @@ Type | Description
 json | parse the HTTP body as JSON and use specified string or number field as key
 http | use the specified HTTP header as key
 url | use the last part of the URL as key e.g. /requests/aA1bB2cC3dD4eE5fF6
+regexp | match the HTTP content with a regular expression and use the result as key
 
