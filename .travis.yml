@@ -1,1 +1,19 @@
 language: go
+
+go:
+  - 1.2
+
+env:
+  secure: "NS+yPfl1uWGGKJoqfBDpKmbQlXyRycUEiMJ7oTKolZU5Xawn/hADEVtdyDnDAsT0L303KepczkZKMZMkHKjyK6e869Hg2SU27OoSMPIX5vJPG5+Fbw3X/ONSnHc8LupJWIPI5+pPdUja/ELNP4XQ+ZQ8Uxots3AahbrXfC0/ckw="
+
+install:
+  go get -d -v ./... && go install -v ./...
+
+deploy:
+  provider: releases
+  api-key: ${GH_TOKEN}
+  file: /home/travis/gopath/bin/shard
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
