@@ -4,7 +4,7 @@ package shard
 
 import (
 	"fmt"
-	"github.com/EricRobert/goreports"
+	"github.com/datacratic/goreports"
 )
 
 type HTTPSharder struct {

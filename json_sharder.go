@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/EricRobert/goreports"
+	"github.com/datacratic/goreports"
 )
 
 type JSONSharder struct {

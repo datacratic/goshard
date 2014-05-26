@@ -5,7 +5,7 @@ package shard
 import (
 	"bytes"
 	"fmt"
-	"github.com/EricRobert/goreports"
+	"github.com/datacratic/goreports"
 	"net/http"
 	"time"
 )

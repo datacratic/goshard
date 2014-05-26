@@ -5,9 +5,9 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/EricRobert/gometrics"
-	"github.com/EricRobert/goreports"
-	"github.com/EricRobert/goshard"
+	"github.com/datacratic/gometrics"
+	"github.com/datacratic/goreports"
+	"github.com/datacratic/goshard"
 	"log"
 	"net/http"
 	"os"
