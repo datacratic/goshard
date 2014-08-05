@@ -101,14 +101,18 @@ func (d *Dispatcher) routeMessage(w http.ResponseWriter, r *http.Request) (metri
 
 	metrics.PostDuration = time.Now().Sub(t1)
 
-	for k, v := range p.Header {
-		w.Header().Set(k, v[0])
-		for i := range v {
-			w.Header().Add(k, v[i])
+	if p.StatusCode == http.StatusOK {
+		for k, v := range p.Header {
+			w.Header().Set(k, v[0])
+			for i := 1; i != len(v); i++ {
+				w.Header().Add(k, v[i])
+			}
 		}
-	}
 
-	w.Write(rep.Content)
+		w.Write(rep.Content)
+	} else {
+		w.WriteHeader(http.StatusNoContent)
+	}
 
 	metrics.FullDuration = time.Now().Sub(t0)
 	return
